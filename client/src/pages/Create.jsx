@@ -15,8 +15,7 @@ const Create = () => {
     photo: '',
   });
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSurpriseMe = () => {
     const randomPrompt = getRandomPrompt(form.prompt);
@@ -27,7 +26,7 @@ const Create = () => {
     if (form.prompt) {
       try {
         setGeneratingImg(true);
-        const response = await fetch('https://slim-ai-image-generator.onrender.com/api/v1/dalle', {
+        const response = await fetch('http://localhost:8080/api/v1/unsplash', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -43,14 +42,13 @@ const Create = () => {
         }
 
         const data = await response.json();
-        console.log('Response from server:', data); // Log the response for debugging
         if (data.photo) {
-          setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+          setForm({ ...form, photo: data.photo });
         } else {
           throw new Error('Failed to generate image');
         }
       } catch (err) {
-        console.error('Error generating image:', err); // Log the error for debugging
+        console.error('Error generating image:', err);
         alert('Error generating image: ' + err.message);
       } finally {
         setGeneratingImg(false);
@@ -62,29 +60,29 @@ const Create = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (form.prompt && form.photo) {
       setLoading(true);
       try {
-        const response = await fetch('https://slim-ai-image-generator.onrender.com/api/v1/post', {
+        const response = await fetch('http://localhost:8080/api/v1/post', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ ...form }),
         });
-
+  
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error.message || 'Failed to share image');
+          throw new Error(errorData.message || 'Failed to share image');
         }
-
+  
         await response.json();
         alert('Success');
         navigate('/');
       } catch (err) {
-        console.error('Error sharing image:', err); // Log the error for debugging
-        alert('Error sharing image: ' + err.message);
+        console.error('Error sharing image:', err.message || err);
+        alert('Error sharing image: ' + (err.message || err.toString()));
       } finally {
         setLoading(false);
       }
@@ -92,7 +90,7 @@ const Create = () => {
       alert('Please generate an image with proper details');
     }
   };
-
+  
   return (
     <div className="ml-5">
       <div className="font-extrabold text-xl pt-5 pb-5">
@@ -127,9 +125,7 @@ const Create = () => {
         <div className="flex flex-row justify-center mt-5">
           <div className="relative bg-gray-100 border border-gray-200 w-96 flex flex-row justify-center items-center">
             {form.photo ? (
-              <img className="w-full h-full object-contain"
-                src={form.photo}
-                alt={form.prompt} />
+              <img className="w-full h-full object-contain" src={form.photo} alt={form.prompt} />
             ) : (
               <img className="object-contain h-9/12 w-9/12 opacity-40" src={preview} alt="preview" />
             )}
